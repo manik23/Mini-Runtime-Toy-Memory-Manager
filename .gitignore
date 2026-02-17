@@ -1,0 +1,5 @@
+*.o
+*.dSYM
+test_mini_malloc
+libmini_malloc.a
+Resources
