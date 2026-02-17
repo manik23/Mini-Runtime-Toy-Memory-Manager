@@ -14,11 +14,7 @@ void mini_stats() {
   printf("Bytes Used: %zu\n", total_size - byte_free);
 }
 
-void *mini_malloc(size_t size) {
-  if (rootArena == NULL) {
-    mini_init(ARENA_SIZE);
-  }
-
+void *allocate_from_arena(size_t size) {
   // Ensure 8-byte alignment for the next allocation
   size = (size + 7) & ~7;
 
@@ -28,10 +24,15 @@ void *mini_malloc(size_t size) {
     rootArena->current_address = (char *)rootArena->current_address + size;
     return ptr;
   }
-
-  fprintf(stderr, "Out of memory in arena!\n");
-
   return NULL;
+}
+
+void *mini_malloc(size_t size) {
+  if (rootArena == NULL) {
+    mini_init(ARENA_SIZE);
+  }
+
+  return allocate_from_arena(size);
 }
 
 void mini_cleanup() { arena_free(rootArena); }

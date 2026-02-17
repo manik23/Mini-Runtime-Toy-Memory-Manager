@@ -10,8 +10,12 @@ int main() {
     printf("Allocated ptr1 at: %p\n", (void *)ptr1);
     *ptr1 = 42;
     printf("Value at ptr1: %d (Success)\n", *ptr1);
+  } else {
+    fprintf(stderr, "error in memory allocation!\n");
+    goto cleanup;
   }
 
+cleanup:
   mini_stats();
   mini_cleanup();
   printf("Test complete.\n");
