@@ -17,10 +17,15 @@ void arena_init(size_t size) {
 
   arena->start_address = (void *)arena;
   arena->end_address = (void *)arena + size;
-  arena->current_address = (void *)arena;
-  arena->next = NULL;
-  arena->prev = NULL;
-  arena->is_free = 1; // The arena itself is in use
+  for (int i = 0; i < 9; i++) {
+    arena->free_lists[i] =
+        (struct FreeBlock *)(arena->start_address + i * PAGE_SIZE +
+                             sizeof(struct FreeBlock));
+    arena->free_lists[i]->next = NULL;
+    arena->free_lists[i]->prev = NULL;
+    arena->free_lists[i]->size = (8 << i);
+    printf("Address of class size  %d: %p\n", (8 << i), arena->free_lists[i]);
+  }
   arena->total_size = size;
   rootArena = arena;
 }
@@ -41,9 +46,4 @@ void display_arena(struct Arena *arena) {
   printf("Arena: %p\n", arena);
   printf("Start Address: %p\n", arena->start_address);
   printf("End Address: %p\n", arena->end_address);
-  printf("Current Address: %p\n", arena->current_address);
-  printf("Next: %p\n", arena->next);
-  printf("Prev: %p\n", arena->prev);
-  printf("Is Free: %d\n", arena->is_free);
-  printf("Total Size: %zu\n", arena->total_size);
 }
