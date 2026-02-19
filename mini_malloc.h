@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 
-void mini_init(size_t size);
 void mini_cleanup();
 void *mini_malloc(size_t size);
 void mini_free(void *ptr);

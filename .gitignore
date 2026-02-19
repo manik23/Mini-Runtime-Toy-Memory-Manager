@@ -4,3 +4,5 @@ test_mini_malloc
 libmini_malloc.a
 Resources
 *test
+*.o
+*.benchmark

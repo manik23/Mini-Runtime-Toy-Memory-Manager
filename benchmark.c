@@ -101,6 +101,7 @@ void run_benchmark() {
          (time_taken / total_attempts) * 1e6);
 
   free(ptrs);
+  mini_stats();
   mini_cleanup();
 }
 

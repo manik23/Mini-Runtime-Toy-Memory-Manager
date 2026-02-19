@@ -62,7 +62,9 @@ void *allocate_from_arena(size_t size) {
   }
 
   if (size > (8 << 8)) {
+#ifdef DEBUG
     printf("Allocating larger block of size %zu\n", size);
+#endif
     struct FreeBlock *larger_ptr = (struct FreeBlock *)mmap(
         NULL, size + sizeof(struct FreeBlock), PROT_READ | PROT_WRITE,
         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
