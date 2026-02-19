@@ -24,6 +24,8 @@ struct Arena {
   void *start_address;
   void *end_address;
   struct lists free_lists[9];
+  void *next_fresh_page;
+  int current_page_count;
   size_t total_size;
 };
 

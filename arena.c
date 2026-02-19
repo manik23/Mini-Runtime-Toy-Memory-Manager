@@ -35,14 +35,23 @@ void arena_init(size_t size) {
     arena->free_lists[i].head->is_busy = 0;
   }
   arena->total_size = size;
+  arena->current_page_count = 10;
   rootArena = arena;
 }
 
 void *allocate_from_arena(size_t size) {
+  if (size == 0) {
+    printf("Size is 0\n");
+    return NULL;
+  }
+
+  if (size > ARENA_SIZE) {
+    printf("Size is greater than arena size\n");
+    return NULL;
+  }
 
   if (rootArena == NULL) {
-    printf("Arena not initialized\n");
-    return NULL;
+    arena_init(ARENA_SIZE);
   }
 
   if (size >= (8 << 8)) {
@@ -81,7 +90,7 @@ void *allocate_from_arena(size_t size) {
   if (slab >= 9)
     return NULL;
 
-  printf("requested size: %zu\n at slab: %d\n", size, slab);
+  printf("requested size: %zu at slab: %d\n", size, slab);
 
   struct lists *list = &rootArena->free_lists[slab];
 
@@ -104,6 +113,7 @@ void *allocate_from_arena(size_t size) {
   // in the page
   if ((char *)temp + sizeof(struct FreeBlock) + size >
       (char *)list->end_address) {
+
     printf("No more space in list %d\n", slab);
     return NULL;
   }

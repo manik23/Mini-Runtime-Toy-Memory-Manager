@@ -3,15 +3,15 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define NUM_ALLOCS 100
+#define NUM_ALLOCS 100000
 #define MAX_SIZE 128
+#define LARGE_SIZE 2048
 
 void run_benchmark() {
   struct timespec start, end;
   void *ptrs[NUM_ALLOCS];
 
   printf("--- Benchmarking Mini-Malloc ---\n");
-  mini_init(1024 * 1024 * 10); // 10MB Arena
 
   clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -39,6 +39,23 @@ void run_benchmark() {
       ptrs[i] = mini_malloc(size);
       if (ptrs[i])
         success_count++;
+    }
+  }
+
+  // 4. Free remaining
+  for (int i = 0; i < NUM_ALLOCS; i++) {
+    if (ptrs[i]) {
+      mini_free(ptrs[i]);
+    }
+  }
+
+  // Large Blocks
+  for (int i = 0; i < NUM_ALLOCS; i++) {
+    size_t size = (LARGE_SIZE) + 1;
+    ptrs[i] = mini_malloc(size);
+    if (ptrs[i]) {
+      mini_free(ptrs[i]);
+      success_count++;
     }
   }
 
