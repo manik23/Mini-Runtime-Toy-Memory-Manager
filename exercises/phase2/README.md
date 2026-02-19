@@ -11,3 +11,4 @@ Implement memory reclamation and reuse using segregated lists divided into pages
 - **Size Classes**: Grouping allocations (8B, 16B, 32B...).
 - **Explicit Free Lists**: Tracking free blocks via in-memory headers.
 - **Pointer Arithmetic**: Moving from user data back to the header during `mini_free`.
+- **Benchmarking**: Measuring allocation overhead and success rate under pressure.

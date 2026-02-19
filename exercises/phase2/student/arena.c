@@ -39,23 +39,33 @@ void arena_init(size_t size) {
 }
 
 void *allocate_from_arena(size_t size) {
-  // Ensure 8-byte alignment for the next allocation
-  size = (size + 7) & ~7;
-
-  int free_list_index = log2(size) - 3;
-  printf("free list index: %d\n", free_list_index);
-
-  if (free_list_index < 0 || free_list_index >= 9) {
-    printf("Invalid free list index: %d\n", free_list_index);
-    return NULL;
-  }
 
   if (rootArena == NULL) {
     printf("Arena not initialized\n");
     return NULL;
   }
 
-  struct lists *list = &rootArena->free_lists[free_list_index];
+  // 1. Round to next power of two (8B minimum)
+  size_t aligned = 8;
+  while (aligned < size)
+    aligned <<= 1;
+
+  size = aligned;
+
+  // 2. Find the correct list index
+  int slab = 0;
+  while (aligned > 8) {
+    aligned >>= 1;
+    slab++;
+  }
+
+  // 3. Only handles up to 2048 bytes (8 << 8)
+  if (slab >= 9)
+    return NULL;
+
+  printf("requested size: %zu\n at slab: %d\n", size, slab);
+
+  struct lists *list = &rootArena->free_lists[slab];
 
   struct FreeBlock *curr = list->head;
 
@@ -76,7 +86,7 @@ void *allocate_from_arena(size_t size) {
   // in the page
   if ((char *)temp + sizeof(struct FreeBlock) + size >
       (char *)list->end_address) {
-    printf("No more space in list %d\n", free_list_index);
+    printf("No more space in list %d\n", slab);
     return NULL;
   }
 

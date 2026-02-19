@@ -33,9 +33,14 @@ $(LIB_NAME): $(OBJ)
 run: $(EXE_NAME)
 	./$(EXE_NAME)
 
+# Benchmark 
+benchmark: $(OBJ) benchmark.c
+	$(CC) $(CFLAGS) $^ -o benchmark $(LDFLAGS)
+	./benchmark
+
 # Clean up
 clean:
-	rm -f *.o $(EXE_NAME) $(LIB_NAME)
+	rm -f *.o $(EXE_NAME) $(LIB_NAME) benchmark
 
 # Rebuild everything
 re: clean all

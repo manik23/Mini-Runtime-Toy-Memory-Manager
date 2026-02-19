@@ -15,6 +15,16 @@ void mini_stats() {
 }
 
 void *mini_malloc(size_t size) {
+  if (size == 0) {
+    printf("Size is 0\n");
+    return NULL;
+  }
+
+  if (size > ARENA_SIZE) {
+    printf("Size is greater than arena size\n");
+    return NULL;
+  }
+
   if (rootArena == NULL) {
     mini_init(ARENA_SIZE);
   }
