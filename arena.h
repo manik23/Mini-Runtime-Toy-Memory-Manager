@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #define PAGE_SIZE getpagesize()
-#define ARENA_SIZE (16 * PAGE_SIZE)
+#define ARENA_SIZE (10L * 1024L * 1024L)
 
 struct FreeBlock {
   struct FreeBlock *next;
@@ -25,13 +25,12 @@ struct Arena {
   void *end_address;
   struct lists free_lists[9];
   void *next_fresh_page;
-  int current_page_count;
+  int current_page;
   size_t total_size;
 };
 
 extern struct Arena *rootArena;
 
-void arena_init(size_t size);
 void *allocate_from_arena(size_t size);
 void free_from_arena(void *ptr);
 void arena_free(struct Arena *arena);

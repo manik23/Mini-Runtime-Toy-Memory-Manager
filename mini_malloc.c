@@ -4,13 +4,7 @@
 #include <sys/mman.h> // mmap, munmap
 #include <unistd.h>   // getpagesize
 
-void mini_stats() {
-  size_t total_size = rootArena->total_size;
-  printf("Total Bytes: %zu\n", total_size);
-  printf("page size: %d\n", PAGE_SIZE);
-  //   printf("Bytes Free: %zu\n", byte_free);
-  //   printf("Bytes Used: %zu\n", total_size - byte_free);
-}
+void mini_stats() { display_arena(rootArena); }
 
 void *mini_malloc(size_t size) { return allocate_from_arena(size); }
 
