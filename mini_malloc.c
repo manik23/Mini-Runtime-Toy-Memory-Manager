@@ -1,5 +1,4 @@
 #include "arena.h"
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h> // mmap, munmap
@@ -15,33 +14,6 @@ void mini_stats() {
   //   printf("Bytes Used: %zu\n", total_size - byte_free);
 }
 
-void *allocate_from_arena(size_t size) {
-  // Ensure 8-byte alignment for the next allocation
-  size = (size + 7) & ~7;
-
-  int free_list_index = log2(size) - 3;
-  printf("free list index: %d\n", free_list_index);
-
-  struct FreeBlock *block = rootArena->free_lists[free_list_index];
-  struct FreeBlock *prev = NULL;
-  while (block->next != NULL &&
-         block->next != rootArena->free_lists[free_list_index] + PAGE_SIZE) {
-    prev = block;
-    block = block->next;
-  }
-
-  if (block->next == rootArena->free_lists[free_list_index] + PAGE_SIZE) {
-    printf("No free block found in size %zu\n", size);
-    return NULL;
-  }
-
-  block->next = NULL;
-  block->prev = prev;
-  block->size = size;
-
-  return block;
-}
-
 void *mini_malloc(size_t size) {
   if (rootArena == NULL) {
     mini_init(ARENA_SIZE);
@@ -52,4 +24,4 @@ void *mini_malloc(size_t size) {
 
 void mini_cleanup() { arena_free(rootArena); }
 
-void mini_free(void *ptr) {}
+void mini_free(void *ptr) { free_from_arena(ptr); }

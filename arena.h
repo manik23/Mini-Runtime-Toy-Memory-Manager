@@ -8,21 +8,30 @@
 #define ARENA_SIZE (16 * PAGE_SIZE)
 
 struct FreeBlock {
-  size_t size;
   struct FreeBlock *next;
   struct FreeBlock *prev;
+  size_t size;
+  int is_busy;
+};
+
+struct lists {
+  struct FreeBlock *head;
+  void *start_address;
+  void *end_address;
 };
 
 struct Arena {
   void *start_address;
   void *end_address;
-  struct FreeBlock *free_lists[9];
+  struct lists free_lists[9];
   size_t total_size;
 };
 
 extern struct Arena *rootArena;
 
 void arena_init(size_t size);
+void *allocate_from_arena(size_t size);
+void free_from_arena(void *ptr);
 void arena_free(struct Arena *arena);
 void display_arena(struct Arena *arena);
 
