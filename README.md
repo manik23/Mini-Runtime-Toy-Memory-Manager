@@ -8,8 +8,8 @@ A educational memory manager written in C using `mmap` to understand the interna
 | :--- | :--- | :--- | :--- |
 | **Phase 1** | [Arena & Bump Allocator](./exercises/phase1) | Basic `mmap` allocation and linear cursor. | ✅ Done |
 | **Phase 2** | [Segregated Free Lists](./exercises/phase2) | Slab-style pages with reuse logic for small objects. | ✅ Done |
-| **Phase 3** | Page Heap & Large Objects | Support for dynamic growth and allocations > 2KB. | 🚧 In Progress |
-| **Phase 4** | Coalescing & Fragmentation | Merging adjacent free blocks to reduce external fragmentation. | ⏳ Planned |
+| **Phase 3** | [Page Heap & Large Objects](./exercises/phase3) | Support for dynamic growth and allocations > 2KB. | ✅ Done |
+| **Phase 4** | Explicit Free Lists | O(1) allocation using LIFO free lists. | 🚧 In Progress |
 | **Phase 5** | Garbage Collection | Mark-and-sweep implementation. | ⏳ Planned |
 
 ## How to use
