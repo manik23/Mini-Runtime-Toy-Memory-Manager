@@ -111,6 +111,18 @@ int main() {
     goto cleanup;
   }
 
+  printf("Allocating large block (100KB)...\n");
+  void *large_p = mini_malloc(100 * 1024);
+  if (large_p != NULL) {
+    printf("Allocated large block at: %p\n", large_p);
+    char *data = (char *)large_p;
+    data[0] = 'H';
+    data[1024] = 'i';
+    printf("Large block verified (%c%c). Freeing it now...\n", data[0],
+           data[1024]);
+    mini_free(large_p);
+  }
+
 cleanup:
   mini_stats();
   mini_cleanup();

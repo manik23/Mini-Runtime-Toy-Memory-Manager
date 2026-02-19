@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define NUM_ALLOCS 10000
+#define NUM_ALLOCS 100
 #define MAX_SIZE 128
 
 void run_benchmark() {

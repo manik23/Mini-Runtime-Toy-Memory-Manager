@@ -45,6 +45,24 @@ void *allocate_from_arena(size_t size) {
     return NULL;
   }
 
+  if (size >= (8 << 8)) {
+    printf("Allocating larger block of size %zu\n", size);
+    struct FreeBlock *larger_ptr = (struct FreeBlock *)mmap(
+        NULL, size + sizeof(struct FreeBlock), PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    if (larger_ptr == MAP_FAILED) {
+      perror("mmap large block");
+      return NULL;
+    }
+
+    larger_ptr->size = size;
+    larger_ptr->is_busy = 1;
+    larger_ptr->next = NULL;
+    larger_ptr->prev = NULL;
+    return (void *)(larger_ptr + 1);
+  }
+
   // 1. Round to next power of two (8B minimum)
   size_t aligned = 8;
   while (aligned < size)
@@ -106,8 +124,15 @@ void free_from_arena(void *ptr) {
   }
 
   struct FreeBlock *block = (struct FreeBlock *)ptr - 1;
-  block->is_busy = 0;
-  printf("Freed block at %p (Header at %p)\n", ptr, (void *)block);
+
+  if (block->size >= (8 << 8)) {
+    printf("Will unmap block at %p (Header at %p)\n", ptr, (void *)block);
+    munmap(block, block->size + sizeof(struct FreeBlock));
+    return;
+  } else {
+    printf("Will Reuse block at %p (Header at %p)\n", ptr, (void *)block);
+    block->is_busy = 0;
+  }
 }
 
 void arena_free(struct Arena *arena) {
