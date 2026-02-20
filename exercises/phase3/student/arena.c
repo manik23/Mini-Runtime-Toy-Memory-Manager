@@ -22,11 +22,15 @@ void arena_init(size_t size) {
   arena->current_page++;
 
   for (int i = 0; i < 9; i++) {
+#ifdef DEBUG
     // printf("Free list index %d: \n", i);
+#endif
     arena->free_lists[i].start_address = (char *)arena + PAGE_SIZE * (i + 1);
     arena->free_lists[i].end_address = (char *)arena + PAGE_SIZE * (i + 2);
+#ifdef DEBUG
     // printf("start address: %p\n", arena->free_lists[i].start_address);
     // printf("end address: %p\n", arena->free_lists[i].end_address);
+#endif
 
     arena->free_lists[i].head =
         (struct FreeBlock *)arena->free_lists[i].start_address;

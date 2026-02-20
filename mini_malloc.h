@@ -3,9 +3,9 @@
 
 #include <stddef.h>
 
+void mini_stats();
 void mini_cleanup();
 void *mini_malloc(size_t size);
 void mini_free(void *ptr);
-void mini_stats();
 
 #endif

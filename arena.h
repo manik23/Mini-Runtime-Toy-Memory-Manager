@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #define PAGE_SIZE getpagesize()
-#define ARENA_SIZE (10L * 1024L * 1024L)
+#define ARENA_SIZE (100L * 1024L * 1024L)
 
 struct FreeBlock {
   struct FreeBlock *next;

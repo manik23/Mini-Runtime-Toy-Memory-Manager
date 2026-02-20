@@ -1,112 +1,127 @@
 #include "mini_malloc.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-#define NUM_ALLOCS 100000
-#define MAX_SIZE 128
+#define NUM_ALLOCS 50000
+#define MAX_SIZE 1024
 #define LARGE_SIZE 2048
 
-void run_benchmark() {
+typedef struct {
+  double time_taken;
+  int total_attempts;
+  int success_count;
+} BenchmarkResult;
+
+BenchmarkResult run_test(bool use_mini) {
   struct timespec start, end;
   void **ptrs = malloc(NUM_ALLOCS * sizeof(void *));
   if (!ptrs) {
     perror("malloc ptrs");
-    return;
+    exit(1);
   }
 
-  printf("--- Benchmarking Mini-Malloc ---\n");
+  int total_attempts = 0;
+  int success_count = 0;
 
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  int total_attempts = 0;
-  int success_count = 0; // Overall success count
-
-  int success_p1 = 0;
   // 1. Stress Allocation
-  printf("Phase 1: Stress Allocation (%d ops)... ", NUM_ALLOCS);
   for (int i = 0; i < NUM_ALLOCS; i++) {
     size_t size = (rand() % MAX_SIZE) + 1;
     total_attempts++;
-    ptrs[i] = mini_malloc(size);
+    ptrs[i] = use_mini ? mini_malloc(size) : malloc(size);
     if (ptrs[i])
-      success_p1++;
+      success_count++;
   }
-  printf("Success: %d\n", success_p1);
-  success_count += success_p1;
 
-  // 2. Stress Free
-  printf("Phase 2: Partial Free (50%% of ops)...\n");
-  int free_count = 0;
+  // 2. Partial Free (50%)
   for (int i = 0; i < NUM_ALLOCS; i++) {
-    if (ptrs[i] && (i % 2 == 0)) { // Corrected 'ptr[i]' to 'ptrs[i]'
-      mini_free(ptrs[i]);
+    if (ptrs[i] && (i % 2 == 0)) {
+      if (use_mini)
+        mini_free(ptrs[i]);
+      else
+        free(ptrs[i]);
       ptrs[i] = NULL;
-      free_count++;
     }
   }
 
-  int success_p3 = 0;
-  // 3. Re-allocation (testing reuse)
-  printf("Phase 3: Re-allocation on freed slots (%d ops)... ", free_count);
+  // 3. Re-allocation
   for (int i = 0; i < NUM_ALLOCS; i++) {
     if (ptrs[i] == NULL) {
       size_t size = (rand() % MAX_SIZE) + 1;
       total_attempts++;
-      ptrs[i] = mini_malloc(size);
+      ptrs[i] = use_mini ? mini_malloc(size) : malloc(size);
       if (ptrs[i])
-        success_p3++;
+        success_count++;
     }
   }
-  printf("Success: %d\n", success_p3);
-  success_count += success_p3;
 
-  // 4. Free all
-  printf("Phase 4: Free all remaining...\n");
+  // 4. Large Blocks
+  for (int i = 0; i < NUM_ALLOCS / 10; i++) {
+    size_t size = LARGE_SIZE + (rand() % 10000);
+    total_attempts++;
+    void *p = use_mini ? mini_malloc(size) : malloc(size);
+    if (p) {
+      success_count++;
+      if (use_mini)
+        mini_free(p);
+      else
+        free(p);
+    }
+  }
+
+  // 5. Final Cleanup
   for (int i = 0; i < NUM_ALLOCS; i++) {
     if (ptrs[i]) {
-      mini_free(ptrs[i]);
-      ptrs[i] = NULL;
+      if (use_mini)
+        mini_free(ptrs[i]);
+      else
+        free(ptrs[i]);
     }
   }
-
-  int success_p5 = 0;
-  // 5. Large Blocks
-  printf("Phase 5: Large Block Allocation (%d ops)... ", NUM_ALLOCS / 10);
-  for (int i = 0; i < NUM_ALLOCS / 10; i++) {
-    size_t size =
-        LARGE_SIZE + (rand() % 10000); // Corrected 'LARGE_SIZE' to 'MAX_SIZE'
-    total_attempts++;
-    void *p = mini_malloc(size);
-    if (p) {
-      success_p5++;
-      mini_free(p);
-    }
-  }
-  printf("Success: %d\n", success_p5);
-  success_count += success_p5;
 
   clock_gettime(CLOCK_MONOTONIC, &end);
-
-  double time_taken =
-      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-
-  printf("\n--- Results ---\n");
-  printf("Total attempts:       %d\n", total_attempts);
-  printf("Successful allocs:    %d\n", success_count);
-  printf("Success rate:         %.2f%%\n",
-         (double)success_count / total_attempts * 100);
-  printf("Time taken:           %.6f seconds\n", time_taken);
-  printf("Avg time/op:          %.6f microseconds\n",
-         (time_taken / total_attempts) * 1e6);
-
   free(ptrs);
-  mini_stats();
-  mini_cleanup();
+
+  BenchmarkResult res;
+  res.time_taken =
+      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+  res.total_attempts = total_attempts;
+  res.success_count = success_count;
+  return res;
 }
 
 int main() {
-  srand(time(NULL));
-  run_benchmark();
+  srand(42); // Seed for reproducibility
+
+  printf("Starting Benchmarks...\n");
+  printf("Config: NUM_ALLOCS=%d, MAX_SIZE=%d\n\n", NUM_ALLOCS, MAX_SIZE);
+
+  printf("Running Mini-Malloc Benchmark...\n");
+  BenchmarkResult mini_res = run_test(true);
+  mini_stats();
+  mini_cleanup();
+
+  printf("\nRunning Standard Malloc Benchmark...\n");
+  BenchmarkResult std_res = run_test(false);
+
+  printf("\n--- Comparison Results ---\n");
+  printf("%-20s %-15s %-15s\n", "Metric", "Mini-Malloc", "Std Malloc");
+  printf("------------------------------------------------------------\n");
+  printf("%-20s %-15.6f %-15.6f\n", "Time (sec)", mini_res.time_taken,
+         std_res.time_taken);
+  printf("%-20s %-15d %-15d\n", "Total Attempts", mini_res.total_attempts,
+         std_res.total_attempts);
+  printf("%-20s %-15d %-15d\n", "Success Count", mini_res.success_count,
+         std_res.success_count);
+  printf("%-20s %-15.2f%% %-15.2f%%\n", "Success Rate",
+         (double)mini_res.success_count / mini_res.total_attempts * 100,
+         (double)std_res.success_count / std_res.total_attempts * 100);
+  printf("%-20s %-15.6f %-15.6f\n", "Avg Latency (us)",
+         (mini_res.time_taken / mini_res.total_attempts) * 1e6,
+         (std_res.time_taken / std_res.total_attempts) * 1e6);
+
   return 0;
 }
