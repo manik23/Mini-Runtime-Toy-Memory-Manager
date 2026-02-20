@@ -91,6 +91,13 @@ struct lists {
     manner
   */
   struct FreeBlock *free_head;
+
+  /* tail
+    is the tail of the free block chain.
+    it is used to find the end of the free block chain and
+    allocate new block at the end of the free block chain
+  */
+  struct FreeBlock *tail;
 };
 
 struct Arena {

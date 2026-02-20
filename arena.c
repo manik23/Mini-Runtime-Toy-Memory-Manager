@@ -40,6 +40,7 @@ void arena_init(size_t size) {
     arena->free_lists[i].head->is_busy = 0;
     arena->free_lists[i].head->slab_index = i;
     arena->free_lists[i].free_head = NULL;
+    arena->free_lists[i].tail = arena->free_lists[i].head;
     arena->current_page++;
   }
   arena->total_size = size;
@@ -120,20 +121,16 @@ void *allocate_from_arena(size_t size) {
     return (void *)(found + 1);
   }
 
-  struct FreeBlock *curr = list->head;
+  struct FreeBlock *tail = list->tail;
 
-  while (curr->is_busy && curr->next != NULL) {
-    curr = curr->next;
+  if (!tail->is_busy) {
+    tail->is_busy = 1;
+    return (void *)(tail + 1);
   }
 
-  if (!curr->is_busy) {
-    curr->is_busy = 1;
-    return (void *)(curr + 1);
-  }
-
-  // Carve a new block after curr
+  // Carve a new block after tail
   struct FreeBlock *temp =
-      (struct FreeBlock *)((char *)(curr + 1) + curr->size);
+      (struct FreeBlock *)((char *)(tail + 1) + tail->size);
 
   // Safety check: Ensure the new block Header AND at least 1 unit of data fit
   // in the page
@@ -156,12 +153,13 @@ void *allocate_from_arena(size_t size) {
       fresh_block->is_busy = 1;
       fresh_block->size = size;
       fresh_block->next = NULL;
-      fresh_block->prev = curr;
-      curr->next = fresh_block;
+      fresh_block->prev = tail;
+      tail->next = fresh_block;
       fresh_block->slab_index = slab;
 
       // 3. update the list end address
       list->end_address = (char *)new_page + PAGE_SIZE;
+      list->tail = fresh_block;
 
       return (void *)(fresh_block + 1);
     }
@@ -172,9 +170,10 @@ void *allocate_from_arena(size_t size) {
   temp->size = size;
   temp->is_busy = 1;
   temp->next = NULL;
-  temp->prev = curr;
-  curr->next = temp;
+  temp->prev = tail;
+  tail->next = temp;
   temp->slab_index = slab;
+  list->tail = temp;
 
   return (void *)(temp + 1);
 }
