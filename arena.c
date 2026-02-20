@@ -22,11 +22,15 @@ void arena_init(size_t size) {
   arena->current_page++;
 
   for (int i = 0; i < 9; i++) {
+#ifdef DEBUG
     // printf("Free list index %d: \n", i);
+#endif
     arena->free_lists[i].start_address = (char *)arena + PAGE_SIZE * (i + 1);
     arena->free_lists[i].end_address = (char *)arena + PAGE_SIZE * (i + 2);
+#ifdef DEBUG
     // printf("start address: %p\n", arena->free_lists[i].start_address);
     // printf("end address: %p\n", arena->free_lists[i].end_address);
+#endif
 
     arena->free_lists[i].head =
         (struct FreeBlock *)arena->free_lists[i].start_address;
@@ -34,6 +38,8 @@ void arena_init(size_t size) {
     arena->free_lists[i].head->prev = NULL;
     arena->free_lists[i].head->size = 8 << i;
     arena->free_lists[i].head->is_busy = 0;
+    arena->free_lists[i].head->slab_index = i;
+    arena->free_lists[i].free_head = NULL;
     arena->current_page++;
   }
   arena->total_size = size;
@@ -78,6 +84,7 @@ void *allocate_from_arena(size_t size) {
     larger_ptr->is_busy = 1;
     larger_ptr->next = NULL;
     larger_ptr->prev = NULL;
+    larger_ptr->slab_index = -1;
     return (void *)(larger_ptr + 1);
   }
 
@@ -104,6 +111,14 @@ void *allocate_from_arena(size_t size) {
 #endif
 
   struct lists *list = &rootArena->free_lists[slab];
+
+  if (list->free_head != NULL) {
+    // Ghost Pointer (Payload) Trick
+    struct FreeBlock *found = list->free_head;
+    list->free_head = *(struct FreeBlock **)(found + 1);
+    found->is_busy = 1;
+    return (void *)(found + 1);
+  }
 
   struct FreeBlock *curr = list->head;
 
@@ -143,6 +158,7 @@ void *allocate_from_arena(size_t size) {
       fresh_block->next = NULL;
       fresh_block->prev = curr;
       curr->next = fresh_block;
+      fresh_block->slab_index = slab;
 
       // 3. update the list end address
       list->end_address = (char *)new_page + PAGE_SIZE;
@@ -158,6 +174,7 @@ void *allocate_from_arena(size_t size) {
   temp->next = NULL;
   temp->prev = curr;
   curr->next = temp;
+  temp->slab_index = slab;
 
   return (void *)(temp + 1);
 }
@@ -181,6 +198,9 @@ void free_from_arena(void *ptr) {
     printf("Will Reuse block at %p (Header at %p)\n", ptr, (void *)block);
 #endif
     block->is_busy = 0;
+    *(struct FreeBlock **)(block + 1) =
+        rootArena->free_lists[block->slab_index].free_head;
+    rootArena->free_lists[block->slab_index].free_head = block;
   }
 }
 

@@ -5,4 +5,4 @@ libmini_malloc.a
 Resources
 *test
 *.o
-*.benchmark
+benchmark
